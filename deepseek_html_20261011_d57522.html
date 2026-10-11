@@ -1,0 +1,1446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>⚽ Coach Timer · Clases de Matemáticas</title>
+<style>
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { min-height: 100%; }
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  background: var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background .45s ease, color .35s ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================================
+   TEMAS
+   ============================================================ */
+body[data-theme="clasico"] {
+  --bg: radial-gradient(130% 95% at 50% 0%, #17663a 0%, #06331a 55%, #02150b 100%);
+  --panel: #07200f;
+  --text: #ecfdf5; --muted: #86efac;
+  --surface: rgba(255,255,255,.07); --surface-2: rgba(255,255,255,.04);
+  --border: rgba(255,255,255,.16);
+  --accent: #22c55e; --accent-text: #04240f;
+  --accent-2: #fbbf24; --accent-2-glow: rgba(251,191,36,.65);
+  --seg-on: #d9f99d; --seg-off: rgba(255,255,255,.07);
+  --seg-glow: rgba(163,230,53,.75);
+  --radius: 18px;
+}
+body[data-theme="neutra"] {
+  --bg: linear-gradient(180deg, #fafafa 0%, #f1f1f3 100%);
+  --panel: #ffffff;
+  --text: #18181b; --muted: #71717a;
+  --surface: #ffffff; --surface-2: #f7f7f8;
+  --border: #e4e4e7;
+  --accent: #18181b; --accent-text: #ffffff;
+  --accent-2: #3b82f6; --accent-2-glow: rgba(59,130,246,.45);
+  --seg-on: #18181b; --seg-off: rgba(0,0,0,.07);
+  --seg-glow: rgba(0,0,0,.22);
+  --radius: 14px;
+}
+body[data-theme="kawaii"] {
+  --bg: radial-gradient(125% 100% at 50% 0%, #ffe9f4 0%, #f3e8ff 55%, #e0f2fe 100%);
+  --panel: #fff7fc;
+  --text: #6b2a52; --muted: #c77fb0;
+  --surface: rgba(255,255,255,.8); --surface-2: rgba(255,255,255,.6);
+  --border: rgba(255,143,200,.45);
+  --accent: #ff8ec7; --accent-text: #5b1b3d;
+  --accent-2: #7dd3fc; --accent-2-glow: rgba(125,211,252,.7);
+  --seg-on: #ff5fa2; --seg-off: rgba(255,143,200,.17);
+  --seg-glow: rgba(255,95,162,.55);
+  --radius: 30px;
+}
+body[data-theme="infantil"] {
+  --bg: radial-gradient(125% 100% at 50% 0%, #fff9c4 0%, #ffe0b2 55%, #b3e5fc 100%);
+  --panel: #fffdf5;
+  --text: #1f2937; --muted: #ea580c;
+  --surface: rgba(255,255,255,.85); --surface-2: rgba(255,255,255,.65);
+  --border: rgba(0,0,0,.1);
+  --accent: #ff6b35; --accent-text: #ffffff;
+  --accent-2: #22c55e; --accent-2-glow: rgba(34,197,94,.5);
+  --seg-on: #2563eb; --seg-off: rgba(37,99,235,.12);
+  --seg-glow: rgba(37,99,235,.45);
+  --radius: 26px;
+}
+body[data-theme="chef"] {
+  --bg: radial-gradient(125% 100% at 50% 0%, #3d2b1e 0%, #1c1310 60%, #0c0806 100%);
+  --panel: #1a1109;
+  --text: #fde8d0; --muted: #d3a373;
+  --surface: rgba(255,255,255,.06); --surface-2: rgba(255,255,255,.035);
+  --border: rgba(255,179,71,.28);
+  --accent: #f59e0b; --accent-text: #2a1a05;
+  --accent-2: #ef4444; --accent-2-glow: rgba(239,68,68,.6);
+  --seg-on: #ffc46b; --seg-off: rgba(255,196,107,.1);
+  --seg-glow: rgba(245,158,11,.65);
+  --radius: 16px;
+}
+body[data-theme="influencer"] {
+  --bg: radial-gradient(125% 100% at 50% 0%, #2e1157 0%, #130820 60%, #07030d 100%);
+  --panel: #130820;
+  --text: #f5ecff; --muted: #b18cff;
+  --surface: rgba(255,255,255,.07); --surface-2: rgba(255,255,255,.04);
+  --border: rgba(177,74,237,.35);
+  --accent: #b14aed; --accent-text: #ffffff;
+  --accent-2: #ff2e97; --accent-2-glow: rgba(255,46,151,.65);
+  --seg-on: #4df3ff; --seg-off: rgba(77,243,255,.1);
+  --seg-glow: rgba(77,243,255,.7);
+  --radius: 22px;
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px clamp(14px, 4vw, 40px) 32px;
+  max-width: 1080px;
+  margin: 0 auto;
+  gap: 8px;
+}
+
+/* --- Topbar --- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0 4px;
+}
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .2px; }
+.brand-icon { font-size: 1.5rem; line-height: 1; filter: drop-shadow(0 2px 6px rgba(0,0,0,.3)); }
+.brand-name { font-size: 1rem; opacity: .9; }
+
+.icon-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  width: 44px; height: 44px;
+  border-radius: 14px;
+  font-size: 1.15rem;
+  cursor: pointer;
+  display: grid; place-items: center;
+  transition: transform .15s ease, background .2s ease, border-color .2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.icon-btn:hover { transform: translateY(-2px); border-color: var(--accent); }
+.icon-btn:active { transform: scale(.94); }
+
+/* --- Stage --- */
+.stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 3vh, 30px);
+  padding: 8px 0 4px;
+}
+
+/* --- Phase pill --- */
+.phase-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 20px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-weight: 700;
+  font-size: .86rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: all .3s ease;
+  white-space: nowrap;
+}
+.phase-pill .dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+  transition: background .3s, box-shadow .3s;
+}
+body.running .phase-pill .dot { animation: pulseDot 1.6s ease-in-out infinite; }
+body.paused .phase-pill .dot { animation: blinkDot 1s steps(2, start) infinite; }
+body.phase-break .phase-pill { color: var(--accent-2); border-color: var(--accent-2); }
+body.phase-break .phase-pill .dot { background: var(--accent-2); box-shadow: 0 0 10px var(--accent-2); }
+
+@keyframes pulseDot { 0%,100%{opacity:1; transform:scale(1);} 50%{opacity:.35; transform:scale(.7);} }
+@keyframes blinkDot { 0%,100%{opacity:1;} 50%{opacity:.15;} }
+
+/* ============================================================
+   DISPLAY 7 SEGMENTOS
+   ============================================================ */
+.clock {
+  --dh: clamp(64px, 15vw, 150px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--dh) * 0.05);
+  transition: opacity .3s ease;
+}
+body.paused .clock { opacity: .45; }
+
+.digit {
+  position: relative;
+  width: calc(var(--dh) * 0.58);
+  height: var(--dh);
+  flex: none;
+}
+
+.seg {
+  position: absolute;
+  background: var(--seg-off);
+  transition: background .1s linear, filter .1s linear;
+}
+.seg.on {
+  background: var(--seg-on);
+  filter: drop-shadow(0 0 6px var(--seg-glow));
+}
+
+/* horizontales */
+.seg-a, .seg-d, .seg-g {
+  left: 17%; width: 66%; height: 9%;
+  clip-path: polygon(11% 0, 89% 0, 100% 50%, 89% 100%, 11% 100%, 0 50%);
+}
+.seg-a { top: 0; }
+.seg-g { top: 45.5%; }
+.seg-d { bottom: 0; }
+
+/* verticales */
+.seg-b, .seg-c, .seg-e, .seg-f {
+  width: 15%; height: 34.5%;
+  clip-path: polygon(0 9%, 50% 0, 100% 9%, 100% 91%, 50% 100%, 0 91%);
+}
+.seg-f { left: 0;  top: 10%; }
+.seg-b { right: 0; top: 10%; }
+.seg-e { left: 0;  bottom: 10%; }
+.seg-c { right: 0; bottom: 10%; }
+
+/* dos puntos */
+.colon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: calc(var(--dh) * 0.2);
+  height: var(--dh);
+  padding: 0 calc(var(--dh) * 0.03);
+  flex: none;
+}
+.colon i {
+  display: block;
+  width: calc(var(--dh) * 0.115);
+  height: calc(var(--dh) * 0.115);
+  border-radius: 50%;
+  background: var(--seg-on);
+  filter: drop-shadow(0 0 6px var(--seg-glow));
+  transition: background .3s;
+}
+body.paused .colon i { animation: blinkDot 1s steps(2, start) infinite; }
+
+/* ============================================================
+   META CARDS
+   ============================================================ */
+.meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 660px;
+}
+.meta-card {
+  flex: 1 1 150px;
+  min-width: 130px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) * .7);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: background .3s, border-color .3s;
+}
+.meta-label {
+  font-size: .66rem;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: .85;
+  font-weight: 600;
+}
+.meta-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   PROGRESO
+   ============================================================ */
+.progress {
+  width: 100%;
+  max-width: 660px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 14px var(--accent);
+  transition: width .25s linear, background .35s ease, box-shadow .35s ease;
+}
+body.phase-break .progress-fill {
+  background: var(--accent-2);
+  box-shadow: 0 0 14px var(--accent-2);
+}
+
+/* ============================================================
+   CONTROLES
+   ============================================================ */
+.controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+.btn {
+  font-family: inherit;
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 14px 26px;
+  border-radius: calc(var(--radius) * .8);
+  cursor: pointer;
+  transition: transform .14s ease, background .2s, border-color .2s, box-shadow .2s;
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 52px;
+}
+.btn:hover { transform: translateY(-2px); border-color: var(--accent); }
+.btn:active { transform: scale(.96); }
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: transparent;
+  box-shadow: 0 8px 26px -10px var(--accent);
+  min-width: 170px;
+  justify-content: center;
+}
+body.phase-break .btn-primary {
+  background: var(--accent-2);
+  box-shadow: 0 8px 26px -10px var(--accent-2);
+}
+.btn-primary:hover { filter: brightness(1.08); border-color: transparent; }
+
+.btn-ghost {
+  background: transparent;
+  width: 100%;
+  justify-content: center;
+  font-size: .88rem;
+}
+
+/* ============================================================
+   DRAWER / SETTINGS
+   ============================================================ */
+.scrim {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  backdrop-filter: blur(3px);
+  opacity: 0; pointer-events: none;
+  transition: opacity .3s ease;
+  z-index: 40;
+}
+.scrim.show { opacity: 1; pointer-events: auto; }
+
+.drawer {
+  position: fixed;
+  top: 0; right: 0; bottom: 0;
+  width: min(440px, 100vw);
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  transform: translateX(103%);
+  transition: transform .34s cubic-bezier(.4, 0, .2, 1);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -24px 0 70px rgba(0,0,0,.45);
+}
+.drawer.open { transform: translateX(0); }
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  flex: none;
+}
+.drawer-head h2 { font-size: 1.15rem; letter-spacing: .01em; }
+
+.drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 20px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.group { display: flex; flex-direction: column; gap: 13px; }
+.group h3 {
+  font-size: .72rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* Theme grid */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 9px;
+}
+.theme-btn {
+  font-family: inherit;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text);
+  border-radius: 14px;
+  padding: 11px 5px 9px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  transition: all .2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.theme-btn:hover { transform: translateY(-2px); }
+.theme-btn.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+  box-shadow: 0 6px 20px -8px var(--accent);
+}
+.theme-emoji { font-size: 1.35rem; line-height: 1; }
+.theme-name { font-size: .68rem; font-weight: 700; letter-spacing: .03em; }
+
+/* Fields */
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field > label {
+  font-size: .84rem;
+  font-weight: 600;
+  color: var(--text);
+  opacity: .92;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.field > label span { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.input-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.input-wrap:focus-within { border-color: var(--accent); }
+.input-wrap input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 12px 14px;
+  font-variant-numeric: tabular-nums;
+}
+.input-wrap .unit {
+  padding: 0 14px;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+select {
+  font-family: inherit;
+  font-size: .95rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color .2s;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+select:focus { border-color: var(--accent); }
+select option { background: var(--panel); color: var(--text); }
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  height: 26px;
+  cursor: pointer;
+  background: transparent;
+}
+
+/* Switch */
+.switch-field {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.switch-field > label:first-child { font-size: .84rem; font-weight: 600; flex: 1; }
+.switch { position: relative; display: inline-block; width: 52px; height: 30px; flex: none; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .slider {
+  position: absolute; inset: 0;
+  background: var(--border);
+  border-radius: 999px;
+  transition: background .22s;
+  cursor: pointer;
+}
+.switch .slider::before {
+  content: "";
+  position: absolute;
+  width: 22px; height: 22px;
+  left: 4px; top: 4px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .22s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+.switch input:checked + .slider { background: var(--accent); }
+.switch input:checked + .slider::before { transform: translateX(22px); }
+
+/* Presets */
+.presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.presets button {
+  font-family: inherit;
+  font-size: .76rem;
+  font-weight: 700;
+  padding: 8px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all .18s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.presets button:hover { border-color: var(--accent); background: var(--accent); color: var(--accent-text); }
+
+.hint {
+  font-size: .74rem;
+  color: var(--muted);
+  line-height: 1.5;
+  opacity: .85;
+}
+
+/* Scrollbar */
+.drawer-body::-webkit-scrollbar { width: 8px; }
+.drawer-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+
+@media (max-width: 420px) {
+  .btn { padding: 13px 18px; font-size: .88rem; }
+  .btn-primary { min-width: 150px; }
+  .meta-card { min-width: 100px; padding: 8px 11px; }
+  .meta-value { font-size: .95rem; }
+}
+</style>
+</head>
+<body data-theme="clasico">
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon" id="brandIcon">⚽</span>
+      <span class="brand-name">Coach Timer</span>
+    </div>
+    <button class="icon-btn" id="openSettings" aria-label="Ajustes">⚙️</button>
+  </header>
+
+  <main class="stage">
+    <div class="phase-pill" id="phasePill">
+      <span class="dot"></span>
+      <span id="phaseLabel">Listo para empezar</span>
+    </div>
+
+    <div class="clock" id="clock" aria-hidden="true"></div>
+
+    <div class="meta">
+      <div class="meta-card">
+        <span class="meta-label">Bloque</span>
+        <span class="meta-value" id="blockInfo">—</span>
+      </div>
+      <div class="meta-card">
+        <span class="meta-label">Restante total</span>
+        <span class="meta-value" id="totalInfo">—</span>
+      </div>
+      <div class="meta-card">
+        <span class="meta-label">Termina a las</span>
+        <span class="meta-value" id="endInfo">—</span>
+      </div>
+    </div>
+
+    <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+
+    <div class="controls">
+      <button class="btn btn-primary" id="btnPlay">
+        <span id="playIcon">▶</span><span id="playLabel">Iniciar</span>
+      </button>
+      <button class="btn" id="btnSkip">⏭ Saltar</button>
+      <button class="btn" id="btnReset">↺ Reiniciar</button>
+    </div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim"></div>
+
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <h2>Ajustes</h2>
+    <button class="icon-btn" id="closeSettings" aria-label="Cerrar">✕</button>
+  </div>
+  <div class="drawer-body">
+
+    <section class="group">
+      <h3>Estilo visual</h3>
+      <div class="theme-grid" id="themeGrid"></div>
+    </section>
+
+    <section class="group">
+      <h3>Tiempos</h3>
+      <div class="field">
+        <label for="sessionMin">Duración de la sesión</label>
+        <div class="input-wrap"><input type="number" id="sessionMin" min="5" max="300" step="1"><span class="unit">MIN</span></div>
+      </div>
+      <div class="field">
+        <label for="blockMin">Clase antes de cada receso</label>
+        <div class="input-wrap"><input type="number" id="blockMin" min="1" max="120" step="1"><span class="unit">MIN</span></div>
+      </div>
+      <div class="field">
+        <label for="breakMin">Duración del receso</label>
+        <div class="input-wrap"><input type="number" id="breakMin" min="1" max="60" step="1"><span class="unit">MIN</span></div>
+      </div>
+      <div class="field">
+        <label for="preAlarmSec">Aviso previo al receso</label>
+        <div class="input-wrap"><input type="number" id="preAlarmSec" min="0" max="300" step="5"><span class="unit">SEG</span></div>
+      </div>
+      <div class="presets" id="presets">
+        <button data-preset="60,10,2">1 h · 10/2</button>
+        <button data-preset="45,10,2">45 min · 10/2</button>
+        <button data-preset="30,10,2">30 min · 10/2</button>
+        <button data-preset="30,5,2">30 min · 5/2</button>
+        <button data-preset="60,15,3">1 h · 15/3</button>
+        <button data-preset="90,12,3">90 min · 12/3</button>
+      </div>
+    </section>
+
+    <section class="group">
+      <h3>Alarma</h3>
+      <div class="field">
+        <label for="soundSelect">Sonido de alarma</label>
+        <select id="soundSelect"></select>
+      </div>
+      <div class="field">
+        <label for="volume">Volumen <span id="volVal">100%</span></label>
+        <input type="range" id="volume" min="0" max="100" step="5" value="100">
+      </div>
+      <div class="field switch-field">
+        <label for="voiceToggle">Voz que anuncia los cambios</label>
+        <label class="switch">
+          <input type="checkbox" id="voiceToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <button class="btn btn-ghost" id="testSound">🔊 Probar alarma</button>
+    </section>
+
+    <section class="group">
+      <button class="btn btn-ghost" id="resetDefaults">Restaurar valores por defecto</button>
+      <p class="hint">Atajos: <b>Espacio</b> = iniciar/pausar · <b>R</b> = reiniciar · <b>S</b> = saltar bloque.</p>
+    </section>
+
+  </div>
+</aside>
+
+<script>
+/* ============================================================
+   ESTADO
+   ============================================================ */
+const DEFAULTS = {
+  theme: 'clasico',
+  sessionMin: 60,
+  blockMin: 10,
+  breakMin: 2,
+  preAlarmSec: 60,
+  volume: 100,
+  sound: 'clasico',
+  voice: true
+};
+
+const STORAGE_KEY = 'coachTimerMath.v1';
+
+const state = {
+  ...DEFAULTS,
+  elapsed: 0,
+  running: false,
+  startedAt: 0,
+  segments: [],
+  curIndex: -1,
+  preFired: false,
+  completed: false
+};
+
+function saveState() {
+  try {
+    const { theme, sessionMin, blockMin, breakMin, preAlarmSec, volume, sound, voice } = state;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ theme, sessionMin, blockMin, breakMin, preAlarmSec, volume, sound, voice }));
+  } catch (e) { /* noop */ }
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    Object.keys(DEFAULTS).forEach(k => {
+      if (data[k] !== undefined && data[k] !== null) state[k] = data[k];
+    });
+  } catch (e) { /* noop */ }
+}
+
+/* ============================================================
+   AUDIO (Web Audio API - sin archivos externos)
+   ============================================================ */
+let ac = null;
+let master = null;
+
+function audio() {
+  if (!ac) {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    ac = new Ctx();
+    master = ac.createGain();
+    master.gain.value = state.volume / 100;
+    master.connect(ac.destination);
+  }
+  if (ac.state === 'suspended') ac.resume();
+  if (master) master.gain.value = state.volume / 100;
+  return ac;
+}
+
+function tone(freq, dur, type = 'sine', delay = 0, vol = 0.8, endFreq = null) {
+  const ctx = audio();
+  if (!ctx) return;
+  const t0 = ctx.currentTime + delay;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = type;
+  o.frequency.setValueAtTime(freq, t0);
+  if (endFreq) o.frequency.exponentialRampToValueAtTime(endFreq, t0 + dur);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t0 + 0.014);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(master);
+  o.start(t0);
+  o.stop(t0 + dur + 0.06);
+}
+
+function whistle(delay = 0, dur = 0.95) {
+  const ctx = audio();
+  if (!ctx) return;
+  const t0 = ctx.currentTime + delay;
+  const o = ctx.createOscillator();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(2050, t0);
+  o.frequency.linearRampToValueAtTime(2450, t0 + 0.16);
+  const lfo = ctx.createOscillator();
+  lfo.type = 'sine';
+  lfo.frequency.value = 38;
+  const lfoGain = ctx.createGain();
+  lfoGain.gain.value = 150;
+  lfo.connect(lfoGain).connect(o.frequency);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(0.6, t0 + 0.03);
+  g.gain.setValueAtTime(0.6, t0 + dur - 0.13);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g).connect(master);
+  o.start(t0); lfo.start(t0);
+  o.stop(t0 + dur + 0.06); lfo.stop(t0 + dur + 0.06);
+}
+
+function bell(delay = 0) {
+  const base = 880;
+  [1, 2.02, 2.98, 4.15].forEach((p, i) => {
+    tone(base * p, 1.7 - i * 0.28, 'sine', delay, 0.38 / (i + 1));
+  });
+}
+
+const SOUNDS = {
+  clasico: {
+    name: '🏟️ Estadio',
+    play(d = 0) {
+      tone(880, 0.17, 'square', d, 0.45);
+      tone(880, 0.17, 'square', d + 0.23, 0.45);
+      tone(1318, 0.5, 'square', d + 0.46, 0.5);
+    }
+  },
+  silbato: {
+    name: '📣 Silbato de árbitro',
+    play(d = 0) { whistle(d, 0.95); }
+  },
+  campana: {
+    name: '🔔 Campana',
+    play(d = 0) { bell(d); }
+  },
+  digital: {
+    name: '⏰ Digital',
+    play(d = 0) { for (let i = 0; i < 5; i++) tone(1600, 0.07, 'square', d + i * 0.11, 0.42); }
+  },
+  suave: {
+    name: '🌙 Suave',
+    play(d = 0) { tone(660, 0.65, 'sine', d, 0.5); tone(990, 0.85, 'sine', d + 0.13, 0.32); }
+  },
+  arcade: {
+    name: '🎮 Arcade',
+    play(d = 0) { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.14, 'square', d + i * 0.09, 0.45)); }
+  },
+  marimba: {
+    name: '🎵 Marimba',
+    play(d = 0) { [1046, 1318, 1568, 2093].forEach((f, i) => tone(f, 0.32, 'triangle', d + i * 0.1, 0.5)); }
+  }
+};
+
+/* ============================================================
+   VOZ
+   ============================================================ */
+let voicesCache = [];
+function loadVoices() {
+  if (!('speechSynthesis' in window)) return;
+  voicesCache = window.speechSynthesis.getVoices() || [];
+}
+if ('speechSynthesis' in window) {
+  loadVoices();
+  window.speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function pickVoice() {
+  if (!voicesCache.length) loadVoices();
+  return voicesCache.find(v => /^es/i.test(v.lang) && /google|natural|premium|enhanced/i.test(v.name))
+      || voicesCache.find(v => /^es-MX/i.test(v.lang))
+      || voicesCache.find(v => /^es/i.test(v.lang))
+      || null;
+}
+
+function speak(text) {
+  if (!state.voice || !text || !('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'es-ES';
+    u.volume = 1;
+    u.rate = 1.04;
+    u.pitch = 1.02;
+    const v = pickVoice();
+    if (v) { u.voice = v; u.lang = v.lang; }
+    window.speechSynthesis.speak(u);
+  } catch (e) { /* noop */ }
+}
+
+function speechDur(sec) {
+  sec = Math.round(sec);
+  if (sec >= 60) {
+    const m = Math.round(sec / 60);
+    return m + (m === 1 ? ' minuto' : ' minutos');
+  }
+  return sec + ' segundos';
+}
+
+/* ============================================================
+   ANUNCIOS
+   ============================================================ */
+function announce(kind, data) {
+  const s = SOUNDS[state.sound] || SOUNDS.clasico;
+  let text = '';
+  let delay = 950;
+
+  switch (kind) {
+    case 'preBreak':
+      text = 'Atención, receso en ' + speechDur(data);
+      delay = 900;
+      break;
+    case 'breakStart':
+      text = '¡Receso! ' + speechDur(data) + ' de descanso';
+      break;
+    case 'preClass':
+      text = 'Volvemos a clase en ' + speechDur(data);
+      delay = 900;
+      break;
+    case 'classStart':
+      text = '¡Volvemos a clase!';
+      break;
+    case 'done':
+      text = '¡Sesión completada! Excelente trabajo.';
+      break;
+  }
+
+  s.play(0);
+  setTimeout(() => speak(text), delay);
+}
+
+/* ============================================================
+   CONSTRUCCIÓN DE LA LÍNEA DE TIEMPO
+   ============================================================ */
+function buildSegments() {
+  const total = Math.max(1, state.sessionMin) * 60;
+  const block = Math.max(1, state.blockMin) * 60;
+  const brk = Math.max(1, state.breakMin) * 60;
+  const segs = [];
+  let t = 0;
+  let guard = 0;
+
+  while (t < total - 0.5 && guard++ < 600) {
+    const remaining = total - t;
+    let classLen = Math.min(block, remaining);
+    let after = remaining - classLen;
+
+    // Si sólo quedaría un receso suelto al final, lo absorbemos en la clase
+    if (after > 0 && after <= brk) {
+      classLen = remaining;
+      after = 0;
+    }
+
+    segs.push({ type: 'class', start: t, dur: classLen });
+    t += classLen;
+
+    const rem2 = total - t;
+    if (rem2 <= 0.5) break;
+
+    const breakLen = Math.min(brk, rem2);
+    segs.push({ type: 'break', start: t, dur: breakLen });
+    t += breakLen;
+  }
+
+  if (!segs.length) segs.push({ type: 'class', start: 0, dur: total });
+  return segs;
+}
+
+function getCurrent() {
+  const e = state.elapsed;
+  const segs = state.segments;
+  for (let i = 0; i < segs.length; i++) {
+    if (e < segs[i].start + segs[i].dur - 0.0001) return { index: i, seg: segs[i] };
+  }
+  const last = segs.length - 1;
+  return { index: last, seg: segs[last] };
+}
+
+/* ============================================================
+   DISPLAY 7 SEGMENTOS
+   ============================================================ */
+const SEG_LETTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+const DIGIT_MAP = {
+  '0': 'abcdef',
+  '1': 'bc',
+  '2': 'abdeg',
+  '3': 'abcdg',
+  '4': 'bcfg',
+  '5': 'acdfg',
+  '6': 'acdefg',
+  '7': 'abc',
+  '8': 'abcdefg',
+  '9': 'abcdfg',
+  '-': 'g',
+  ' ': ''
+};
+
+const clockEl = document.getElementById('clock');
+const digitEls = [];
+let lastClockStr = '';
+
+function buildClock() {
+  clockEl.innerHTML = '';
+  digitEls.length = 0;
+  [0, 1, 'colon', 2, 3].forEach(item => {
+    if (item === 'colon') {
+      const c = document.createElement('div');
+      c.className = 'colon';
+      c.innerHTML = '<i></i><i></i>';
+      clockEl.appendChild(c);
+    } else {
+      const d = document.createElement('div');
+      d.className = 'digit';
+      SEG_LETTERS.forEach(s => {
+        const el = document.createElement('span');
+        el.className = 'seg seg-' + s;
+        d.appendChild(el);
+      });
+      clockEl.appendChild(d);
+      digitEls.push(d);
+    }
+  });
+}
+
+function setDigit(el, ch) {
+  const on = DIGIT_MAP[ch] || '';
+  for (const s of SEG_LETTERS) {
+    const seg = el.querySelector('.seg-' + s);
+    if (seg) seg.classList.toggle('on', on.indexOf(s) !== -1);
+  }
+}
+
+function setClock(sec) {
+  sec = Math.max(0, Math.min(Math.floor(sec), 99 * 60 + 59));
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  const str = String(m).padStart(2, '0') + String(s).padStart(2, '0');
+  if (str === lastClockStr) return;
+  lastClockStr = str;
+  for (let i = 0; i < 4; i++) setDigit(digitEls[i], str[i]);
+}
+
+function fmtMS(totalSec) {
+  totalSec = Math.max(0, Math.round(totalSec));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+const phaseLabel = document.getElementById('phaseLabel');
+const blockInfo = document.getElementById('blockInfo');
+const totalInfo = document.getElementById('totalInfo');
+const endInfo = document.getElementById('endInfo');
+const progressFill = document.getElementById('progressFill');
+const playIcon = document.getElementById('playIcon');
+const playLabel = document.getElementById('playLabel');
+
+function render() {
+  const total = state.sessionMin * 60;
+  const e = Math.min(state.elapsed, total);
+  const info = getCurrent();
+  const seg = info.seg;
+  const remain = Math.max(0, seg.start + seg.dur - e);
+
+  setClock(Math.ceil(remain));
+
+  const isBreak = seg.type === 'break';
+  document.body.classList.toggle('phase-break', isBreak && e > 0.2);
+  document.body.classList.toggle('running', state.running);
+  document.body.classList.toggle('paused', !state.running && state.elapsed > 0.2 && e < total);
+
+  /* Etiqueta de fase */
+  let label;
+  if (e >= total) label = 'Sesión completada';
+  else if (state.elapsed < 0.2 && state.curIndex === -1) label = 'Listo para empezar';
+  else if (!state.running) label = 'En pausa';
+  else label = isBreak ? 'Receso ☕' : 'Clase ⚽';
+  if (phaseLabel.textContent !== label) phaseLabel.textContent = label;
+
+  /* Bloque actual */
+  const classSegs = state.segments.filter(s => s.type === 'class');
+  const breakSegs = state.segments.filter(s => s.type === 'break');
+  if (isBreak) {
+    const n = breakSegs.indexOf(seg) + 1;
+    blockInfo.textContent = 'Receso ' + n + ' / ' + breakSegs.length;
+  } else {
+    const n = classSegs.indexOf(seg) + 1;
+    blockInfo.textContent = 'Clase ' + n + ' / ' + classSegs.length;
+  }
+
+  /* Restante total */
+  totalInfo.textContent = fmtMS(total - e);
+
+  /* Hora de fin */
+  if (state.running) {
+    const end = new Date(Date.now() + (total - e) * 1000);
+    endInfo.textContent = end.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  } else {
+    const end = new Date(Date.now() + (total - e) * 1000);
+    endInfo.textContent = end.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  /* Progreso */
+  progressFill.style.width = ((e / total) * 100).toFixed(2) + '%';
+}
+
+/* ============================================================
+   EVENTOS DE TIEMPO
+   ============================================================ */
+function checkEvents() {
+  if (!state.running) return;
+  const total = state.sessionMin * 60;
+
+  if (state.elapsed >= total) {
+    if (!state.completed) {
+      state.completed = true;
+      state.running = false;
+      state.elapsed = total;
+      announce('done');
+      updatePlayBtn();
+      render();
+    }
+    return;
+  }
+
+  const info = getCurrent();
+  const index = info.index;
+  const seg = info.seg;
+
+  if (index !== state.curIndex) {
+    const prev = state.segments[state.curIndex];
+    state.curIndex = index;
+    state.preFired = false;
+    if (prev) {
+      if (seg.type === 'break') announce('breakStart', seg.dur);
+      else announce('classStart');
+    }
+  }
+
+  const remain = seg.start + seg.dur - state.elapsed;
+
+  if (!state.preFired) {
+    if (seg.type === 'class' && state.preAlarmSec > 0) {
+      const next = state.segments[index + 1];
+      if (next && next.type === 'break' &&
+          remain <= state.preAlarmSec &&
+          remain < seg.dur - 2 &&
+          remain > 0.3) {
+        state.preFired = true;
+        announce('preBreak', Math.round(remain));
+      }
+    } else if (seg.type === 'break' && seg.dur > 40) {
+      const thr = Math.min(30, seg.dur * 0.35);
+      if (remain <= thr && remain > 0.3) {
+        state.preFired = true;
+        announce('preClass', Math.round(remain));
+      }
+    }
+  }
+}
+
+/* ============================================================
+   CONTROL DEL TEMPORIZADOR
+   ============================================================ */
+let intervalId = null;
+
+function loop() {
+  if (state.running) {
+    state.elapsed = (Date.now() - state.startedAt) / 1000;
+    checkEvents();
+  }
+  render();
+}
+
+function startLoop() {
+  if (intervalId) return;
+  intervalId = setInterval(loop, 100);
+}
+
+function updatePlayBtn() {
+  playIcon.textContent = state.running ? '❚❚' : '▶';
+  playLabel.textContent = state.running ? 'Pausar' : (state.elapsed > 0.2 ? 'Continuar' : 'Iniciar');
+}
+
+function togglePlay() {
+  audio(); // desbloquear contexto de audio con el gesto del usuario
+
+  if (!state.running) {
+    if (state.elapsed >= state.sessionMin * 60) resetTimer();
+    state.running = true;
+    state.completed = false;
+    state.startedAt = Date.now() - state.elapsed * 1000;
+    updatePlayBtn();
+  } else {
+    state.running = false;
+    updatePlayBtn();
+  }
+  render();
+}
+
+function resetTimer() {
+  state.running = false;
+  state.elapsed = 0;
+  state.curIndex = -1;
+  state.preFired = false;
+  state.completed = false;
+  state.segments = buildSegments();
+  lastClockStr = '';
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  updatePlayBtn();
+  render();
+}
+
+function skipSegment() {
+  const info = getCurrent();
+  const next = state.segments[info.index + 1];
+  if (next) {
+    state.elapsed = next.start + 0.05;
+    state.startedAt = Date.now() - state.elapsed * 1000;
+    state.preFired = false;
+  } else {
+    state.elapsed = state.sessionMin * 60;
+    state.completed = true;
+    state.running = false;
+  }
+  updatePlayBtn();
+  render();
+}
+
+function rebuildAndReset() {
+  resetTimer();
+}
+
+/* ============================================================
+   CONSTRUCTOR DE AJUSTES / UI
+   ============================================================ */
+const THEMES = [
+  { id: 'clasico',   name: 'Clásico',   icon: '⚽' },
+  { id: 'neutra',    name: 'Neutra',    icon: '◻️' },
+  { id: 'kawaii',    name: 'Kawaii',    icon: '🌸' },
+  { id: 'infantil',  name: 'Infantil',  icon: '🧸' },
+  { id: 'chef',      name: 'Chef',      icon: '👨‍🍳' },
+  { id: 'influencer',name: 'Influencer',icon: '✨' }
+];
+
+const themeGrid = document.getElementById('themeGrid');
+const soundSelect = document.getElementById('soundSelect');
+
+function buildSettingsUI() {
+  /* Temas */
+  themeGrid.innerHTML = '';
+  THEMES.forEach(t => {
+    const b = document.createElement('button');
+    b.className = 'theme-btn';
+    b.dataset.theme = t.id;
+    b.innerHTML = '<span class="theme-emoji">' + t.icon + '</span><span class="theme-name">' + t.name + '</span>';
+    b.addEventListener('click', () => {
+      state.theme = t.id;
+      saveState();
+      syncUI();
+    });
+    themeGrid.appendChild(b);
+  });
+
+  /* Sonidos */
+  soundSelect.innerHTML = '';
+  Object.keys(SOUNDS).forEach(k => {
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = SOUNDS[k].name;
+    soundSelect.appendChild(o);
+  });
+}
+
+function syncUI() {
+  document.body.dataset.theme = state.theme;
+  const th = THEMES.find(t => t.id === state.theme);
+  document.getElementById('brandIcon').textContent = th ? th.icon : '⚽';
+
+  document.getElementById('sessionMin').value = state.sessionMin;
+  document.getElementById('blockMin').value = state.blockMin;
+  document.getElementById('breakMin').value = state.breakMin;
+  document.getElementById('preAlarmSec').value = state.preAlarmSec;
+  document.getElementById('volume').value = state.volume;
+  document.getElementById('volVal').textContent = state.volume + '%';
+  soundSelect.value = state.sound;
+  document.getElementById('voiceToggle').checked = state.voice;
+
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.theme === state.theme);
+  });
+
+  if (master) master.gain.value = state.volume / 100;
+}
+
+/* ============================================================
+   BINDINGS DE AJUSTES
+   ============================================================ */
+function bindNumber(id, key, min, max, rebuild) {
+  const el = document.getElementById(id);
+  el.addEventListener('change', () => {
+    let v = parseFloat(el.value);
+    if (!isFinite(v)) v = DEFAULTS[key];
+    v = Math.round(Math.min(max, Math.max(min, v)));
+    el.value = v;
+    state[key] = v;
+    saveState();
+    if (rebuild) rebuildAndReset();
+    else render();
+  });
+}
+
+function initSettingsBindings() {
+  bindNumber('sessionMin', 'sessionMin', 5, 300, true);
+  bindNumber('blockMin', 'blockMin', 1, 120, true);
+  bindNumber('breakMin', 'breakMin', 1, 60, true);
+  bindNumber('preAlarmSec', 'preAlarmSec', 0, 300, false);
+
+  document.getElementById('volume').addEventListener('input', e => {
+    state.volume = +e.target.value;
+    document.getElementById('volVal').textContent = state.volume + '%';
+    if (master) master.gain.value = state.volume / 100;
+    saveState();
+  });
+
+  soundSelect.addEventListener('change', e => {
+    state.sound = e.target.value;
+    saveState();
+    audio();
+    (SOUNDS[state.sound] || SOUNDS.clasico).play(0);
+  });
+
+  document.getElementById('voiceToggle').addEventListener('change', e => {
+    state.voice = e.target.checked;
+    saveState();
+    if (state.voice) speak('Voz activada');
+    else if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  });
+
+  document.getElementById('testSound').addEventListener('click', () => {
+    audio();
+    const s = SOUNDS[state.sound] || SOUNDS.clasico;
+    s.play(0);
+    setTimeout(() => speak('Atención, receso en un minuto'), 1000);
+  });
+
+  /* Presets */
+  document.getElementById('presets').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-preset]');
+    if (!btn) return;
+    const [s, b, br] = btn.dataset.preset.split(',').map(Number);
+    state.sessionMin = s;
+    state.blockMin = b;
+    state.breakMin = br;
+    saveState();
+    syncUI();
+    rebuildAndReset();
+  });
+
+  /* Reset defaults */
+  document.getElementById('resetDefaults').addEventListener('click', () => {
+    Object.assign(state, DEFAULTS);
+    saveState();
+    syncUI();
+    rebuildAndReset();
+  });
+}
+
+/* ============================================================
+   DRAWER
+   ============================================================ */
+const drawer = document.getElementById('drawer');
+const scrim = document.getElementById('scrim');
+
+function openDrawer() {
+  drawer.classList.add('open');
+  scrim.classList.add('show');
+  drawer.setAttribute('aria-hidden', 'false');
+}
+function closeDrawer() {
+  drawer.classList.remove('open');
+  scrim.classList.remove('show');
+  drawer.setAttribute('aria-hidden', 'true');
+}
+
+/* ============================================================
+   INICIALIZACIÓN
+   ============================================================ */
+function init() {
+  loadState();
+  buildClock();
+  buildSettingsUI();
+  initSettingsBindings();
+  syncUI();
+
+  state.segments = buildSegments();
+  updatePlayBtn();
+  render();
+  startLoop();
+
+  /* Controles */
+  document.getElementById('btnPlay').addEventListener('click', togglePlay);
+  document.getElementById('btnReset').addEventListener('click', resetTimer);
+  document.getElementById('btnSkip').addEventListener('click', skipSegment);
+
+  /* Drawer */
+  document.getElementById('openSettings').addEventListener('click', openDrawer);
+  document.getElementById('closeSettings').addEventListener('click', closeDrawer);
+  scrim.addEventListener('click', closeDrawer);
+
+  /* Atajos de teclado */
+  document.addEventListener('keydown', e => {
+    if (e.target.matches('input, select, textarea')) return;
+    if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
+    else if (e.key === 'r' || e.key === 'R') { resetTimer(); }
+    else if (e.key === 's' || e.key === 'S') { skipSegment(); }
+    else if (e.key === 'Escape') { closeDrawer(); }
+  });
+
+  /* Desbloquear audio al primer toque */
+  const unlock = () => { audio(); document.removeEventListener('pointerdown', unlock); };
+  document.addEventListener('pointerdown', unlock, { once: true });
+
+  /* Al volver a la pestaña, re-sincronizar */
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && state.running) {
+      state.elapsed = (Date.now() - state.startedAt) / 1000;
+      checkEvents();
+      render();
+    }
+  });
+}
+
+init();
+</script>
+</body>
+</html>
